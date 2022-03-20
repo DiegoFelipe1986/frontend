@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import axios from 'axios';
+import axiosClient from '../config/axiosClient';
 import Alert from '../components/Alert';
 
 const NewPassword = () => {
 
+  const [password, setPassword] = useState('');
   const [validToken, setValidToken] = useState(false);
   const [alert, setAlert] = useState({});
+  const [passwordModified, setPasswordModified] = useState(false);
+
   const params = useParams();
   const { token } = params;
 
   useEffect(() => {
     const checkToken = async () => {
       try {
-        await axios(`http://localhost:4000/api/users/forgot-password/${token}`);
+        await axiosClient(`/users/forgot-password/${token}`);
         setValidToken(true);
       } catch (error) {
         setAlert({
@@ -24,7 +27,37 @@ const NewPassword = () => {
     };
     checkToken();
   }, []);
-  const {msg} = alert;
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+
+    if (password.length < 6) {
+      setAlert({
+        msg: "password at least 6 characters min",
+        error: true,
+      });
+      return;
+    }
+
+    try {
+      const url = `/users/forgot-password/${token}`;
+      const { data } = await axiosClient.post(url, { password });
+      setAlert({
+        msg: data.msg,
+        error: false
+      });
+      setPasswordModified(true);
+    } catch (error) {
+      setAlert({
+        msg: error.response.data.msg,
+        error: true
+      });
+    }
+
+  }
+
+  const { msg } = alert;
+
   return (
     <>
       <h1 className="text-sky-600 font-black text-6xl capitalize">
@@ -35,7 +68,10 @@ const NewPassword = () => {
       {msg && <Alert alert={alert} />}
 
       {validToken && (
-        <form className="my-10 bg-white shadow rounded-lg p-10">
+        <form
+          className="my-10 bg-white shadow rounded-lg p-10"
+          onSubmit={handleSubmit}
+        >
           <div className="my-5">
             <label
               className="uppercase text-gray-600 block text-xl font-bold"
@@ -47,7 +83,9 @@ const NewPassword = () => {
               type="password"
               placeholder="Your new password"
               className="w-full mt-3 p-3 border rounded-xl bg-gray-50"
-              autoComplete='false'
+              autoComplete='off'
+              value={password}
+              onChange={e => setPassword(e.target.value)}
             />
           </div>
           <input
@@ -58,6 +96,12 @@ const NewPassword = () => {
           />
         </form>
       )}
+      {passwordModified && (<Link
+        className='block text-center my-5 text-slate-500 uppercase text-sm'
+        to="/"
+      >
+        Sing In
+      </Link>)}
     </>
   )
 }

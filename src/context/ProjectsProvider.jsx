@@ -10,6 +10,9 @@ const ProjectsProvider = ({ children }) => {
     const [alert, setAlert] = useState({});
     const [project, setProject] = useState({});
     const [loading, setLoading] = useState(false);
+    const [modalFormTask, setModalFormTask] = useState(false);
+    const [task, setTask] = useState({});
+    const [modalDeleteTask, setModalDeleteTask] = useState(false);
 
     const navigate = useNavigate();
 
@@ -174,7 +177,120 @@ const ProjectsProvider = ({ children }) => {
             }, 3000);
 
         } catch (error) {
-            console.log('error');
+            console.log(error);
+        }
+    }
+
+    const handleModalTask = () => {
+        setModalFormTask(!modalFormTask);
+
+    }
+
+    const submitTask = async task => {
+
+        if (task?.id) {
+            await editTask(task);
+        } else {
+            await createTask(task);
+        }
+
+
+    }
+
+    const createTask = async task => {
+        try {
+            const token = localStorage.getItem('token');
+
+            if (!token) return;
+
+            const config = {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                }
+            }
+
+            const { data } = await axiosClient.post('/tasks', task, config);
+            const updatedProject = { ...project }
+            updatedProject.tasks = [...project.tasks, data];
+
+            setProject(updatedProject);
+            setAlert({});
+            setModalFormTask(false);
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const editTask = async task => {
+        try {
+            const token = localStorage.getItem('token');
+
+            if (!token) return;
+
+            const config = {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                }
+            }
+
+            const {data} = await axiosClient.put(`/tasks/${task.id}`, task, config);
+
+            const updatedProject = {...project}
+            updatedProject.tasks = updatedProject.tasks.map(taskState => taskState._id === data._id ? data : taskState );
+
+            setProject(updatedProject);
+            setAlert({});
+            setModalFormTask(false);
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const handleModalEdit = task => {
+        setTask(task);
+        setModalFormTask(true);
+    }
+
+    const handleModalDeleteTask = task => {
+        setTask(task);
+        setModalDeleteTask(!modalDeleteTask);
+    }
+
+    const deleteTask = async () => {
+        try {
+            const token = localStorage.getItem('token');
+
+            if (!token) return;
+
+            const config = {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                }
+            }
+
+            const {data} = await axiosClient.delete(`/tasks/${task._id}`, config);
+            setAlert({
+                msg: data.msg,
+                error: false
+            });
+
+            const updatedProject = {...project}
+            updatedProject.tasks = updatedProject.tasks.filter(taskState =>
+            taskState._id !== task._id)
+
+            setProject(updatedProject);
+            setModalDeleteTask(false);
+            setTask({});
+            setTimeout(() => {
+                setAlert({});
+            }, 3000);
+        } catch (error) {
+            console.log(error)
         }
     }
 
@@ -188,7 +304,15 @@ const ProjectsProvider = ({ children }) => {
                 getProject,
                 project,
                 loading,
-                deleteProject
+                deleteProject,
+                modalFormTask,
+                handleModalTask,
+                submitTask,
+                handleModalEdit,
+                task,
+                modalDeleteTask,
+                handleModalDeleteTask,
+                deleteTask
             }}
         >
             {children}

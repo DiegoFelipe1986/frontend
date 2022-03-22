@@ -6,5 +6,5 @@ Then runs whith:
 
 npm run dev
 
-.env content
-VITE_BACKEND_URL = http://localhost:4000
+.env content:
+`VITE_BACKEND_URL = http://localhost:4000

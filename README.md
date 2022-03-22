@@ -8,3 +8,5 @@ npm run dev
 
 .env content:
 `VITE_BACKEND_URL = http://localhost:4000` 
+
+App runs at port 3000 in localhost
